@@ -148,8 +148,6 @@ typedef struct {
 } Bar;
 
 /* function declarations */
-static void cycle_flycolors(const Arg *arg);
-static void update_scheme();
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
@@ -244,7 +242,6 @@ static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 
 /* variables */
-static unsigned int iflycol = 0;
 static const char broken[] = "broken";
 static char stext[256];
 static int screen;
@@ -2193,30 +2190,6 @@ zoom(const Arg *arg)
 	if (c == nexttiled(selmon->clients) && !(c = nexttiled(c->next)))
 		return;
 	pop(c);
-}
-
-void
-update_scheme()
-{
-	Client *c = selmon->sel;
-	for (int i = 0; i < LENGTH(colors); i++)
-		scheme[i] = drw_scm_create(drw, colors[i], 3);
-	focus(c);
-}
-
-void
-cycle_flycolors(const Arg *arg)
-{
-	int flycolors_limit = 256;
-	int i;
-	for(i = 0; flycolors[i] != NULL && i < flycolors_limit; i++)
-		;
-	iflycol += i + arg->i;
-	iflycol %= i;
-	colors[SchemeSel][1] = flycolors[iflycol];
-	colors[SchemeSel][2] = flycolors[iflycol];
-	update_scheme();
-	dmenucmd[10] = flycolors[iflycol];
 }
 
 int
