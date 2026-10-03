@@ -2,7 +2,7 @@
 export PATH="$HOME/.local/bin:$PATH"
 config=${XDG_CONFIG_HOME:-$HOME/.config}/dwmrice
 data=${XDG_DATA_HOME:-$HOME/.local/share}/dwmrice
-# Optional monitor commands belong in this user-owned hook.
+# Configure HDMI left and DisplayPort primary right before wallpaper and DWM.
 [ ! -x "$config/monitors.sh" ] || "$config/monitors.sh"
 xsetroot -solid '#090D16'
 rice-wallpaper

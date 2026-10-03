@@ -30,13 +30,13 @@ DWM keeps the existing Fibonacci, extra-bar, and flycolors patches. The top bar 
 
 ## Current rig tuning
 
-Read-only hardware inspection reported a **Ryzen 5 2600 (6 cores / 12 threads)**, approximately **16 GB RAM**, and an **AMD Ellesmere-family Radeon GPU**. PCI identification does not distinguish the exact card model. The live X display was inaccessible, so monitor modes and refresh rates remain unverified.
+Read-only hardware inspection reported a **Ryzen 5 2600 (6 cores / 12 threads)**, approximately **16 GB RAM**, and an **AMD Ellesmere-family Radeon GPU**. PCI identification does not distinguish the exact card model. The accessible Xwayland session reports DP-2 and HDMI-A-2 at 1920×1080. Native DWM runs under another user, so its connector names and hardware refresh rates could not be inspected from this account.
 
 - Restored the original **120 updates/second** limit for dragging and resizing windows. This is DWM's mouse-event throttle, not a monitor refresh setting or a measured frame rate.
 - Clean builds use up to **8 parallel jobs**, based on available logical CPUs, to reduce rebuild time while leaving headroom on this 12-thread machine.
 - Hardware telemetry uses `/proc` and `/sys`; removed media polling and battery polling from the desktop status loop.
 - Kept tiled resize hints disabled so terminal size increments do not leave unused strips between windows.
-- Preserved the original dual-1080p monitor commands as an opt-in configuration until connectors can be verified.
+- Enabled a dual-1080p startup layout: HDMI on the left, DisplayPort on the right and primary. Connector names are resolved in the running Xorg session.
 
 No CPU governor, GPU driver, compositor, or system services are changed. Performance improvements have not been benchmarked; the changes above are the concrete tuning performed.
 
@@ -101,7 +101,11 @@ Firefox opens on workspace 3 (NET), which starts in monocle. Other workspaces st
 
 ## Display setup
 
-The old `DisplayPort-0` / `HDMI-A-1` arrangement is saved as `~/.config/dwmrice/monitors.sh.example`. Copy it to `monitors.sh`, edit the connector names using `xrandr --query`, and make it executable to enable it. Install `xorg-xrandr` if needed. Otherwise the session uses the displays X11 detects. XDG config and data directory overrides are honored.
+The installer enables `~/.config/dwmrice/monitors.sh`, which `rice-session` runs before the wallpaper and DWM. It detects connected DisplayPort and HDMI outputs in the actual Xorg session, requests 1920×1080 where supported, and places HDMI left of the primary DisplayPort screen, matching your original arrangement. Unsupported modes fall back to `--auto`; if either display is absent, the existing layout is left alone. Refresh rates are selected by Xorg.
+
+The accessible Xwayland desktop currently places DP-2 left of HDMI-A-2; this startup configuration intentionally restores the HDMI-left order from your supplied script. Edit `monitors.sh` to change that order. Do not copy Xwayland connector names blindly into a native Xorg configuration. XDG config and data directory overrides are honored.
+
+Audio inspection reported **PulseAudio on PipeWire** with `pipewire-pulse.service` active. No `pulseaudio --start` command is added. If DWM runs under a different login account, its audio services are managed separately.
 
 To change fonts, colors, tags, or bindings, edit the appropriate `suckless/*/config.h` and rerun the installer. Matching `config.def.h` files provide the same initial theme when a config is regenerated. To recreate the PNG after editing the SVG: `rsvg-convert assets/midnight-relay.svg -o assets/midnight-relay.png` (optional `librsvg` package).
 

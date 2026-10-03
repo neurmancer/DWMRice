@@ -7,4 +7,6 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
     unset hook
 fi
 export PATH="$HOME/.local/bin:$PATH"
+# rice-session applies ~/.config/dwmrice/monitors.sh before starting DWM.
+# Audio uses the existing PipeWire/PulseAudio user service.
 exec rice-session

@@ -68,5 +68,6 @@ copy "$root/config/dunst/nsd.conf" "$config/dunst/nsd.conf" 644
 copy "$root/assets/nsd-schematic.png" "$data/dwmrice/nsd-schematic.png" 644
 copy "$root/assets/midnight-relay.png" "$data/dwmrice/midnight-relay.png" 644
 copy "$root/config/kitty/midnight-relay.conf" "$config/kitty/midnight-relay.conf" 644
+copy "$root/config/dwmrice/monitors.sh" "$config/dwmrice/monitors.sh" 755
 copy "$root/config/dwmrice/monitors.sh.example" "$config/dwmrice/monitors.sh.example" 644
 printf '\nInstalled Midnight Relay. Backups: %s\nStart from a TTY with startx.\n' "$backup"

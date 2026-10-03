@@ -20,6 +20,8 @@ test -s "$stage/data/dwmrice/midnight-relay.png"
 test -s "$stage/data/dwmrice/nsd-schematic.png"
 test -s "$stage/config/dunst/nsd.conf"
 test -s "$stage/config/kitty/midnight-relay.conf"
+test -x "$stage/config/dwmrice/monitors.sh"
+sh -n "$stage/config/dwmrice/monitors.sh"
 cmp "$root/.xinitrc" "$stage/home/.xinitrc"
 backup=$(find "$stage/home" -maxdepth 1 -type d -name '.dwmrice-backup.*')
 number=$(awk -F '\t' -v target="$stage/home/.xinitrc" '$2 == target {print $1}' "$backup/restore.tsv")
