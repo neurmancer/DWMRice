@@ -5,6 +5,8 @@ static const unsigned int borderpx  = 2;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
+static const unsigned int barpadding = 18;     /* extra bar height around text */
+static const char barbadge[] = "NSD // CTRL";
 static const int extrabar           = 1;        /* 0 means no extra bar */
 static const char *fonts[]          = { "DejaVu Sans Mono:size=9" };
 static const char dmenufont[]       = "DejaVu Sans Mono:size=10";
@@ -22,11 +24,16 @@ static const char *flycolors[] = {
 static const char *colors[][3] = {
 	/*               fg         bg         border   */
 	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
+	[SchemeTitle] = { "#C170FF", "#181426", "#C170FF" },
+	[SchemeDim]   = { "#65748F", "#090D16", "#27334B" },
+	[SchemeBlue]  = { "#5A96FF", "#101A2B", "#5A96FF" },
+	[SchemeGreen] = { "#00EB74", "#0D211C", "#00EB74" },
+	[SchemeAlert] = { "#FFB85C", "#2A1C19", "#FFB85C" },
 	[SchemeSel]  = { col_gray4, default_flycolor, default_flycolor }, /* [1] and [2] are changed in cycle_flycolors */
 };
 
 /* tagging */
-static const char *tags[] = { "1:SYS", "2:CODE", "3:NET", "4:WORK", "5:AUX", "6", "7", "8", "9" };
+static const char *tags[] = { "01 SYS", "02 DEV", "03 NET", "04 WRK", "05 AUX", "06", "07", "08", "09" };
 
 static const Rule rules[] = {
 	/* xprop(1):
@@ -134,6 +141,7 @@ static const Key keys[] = {
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 static const Button buttons[] = {
+	{ ClkBadge,            0,              Button1,        spawn,          SHCMD("rice-menu") },
 	/* click                event mask      button          function        argument */
 	{ ClkLtSymbol,          0,              Button1,        setlayout,      {0} },
 	{ ClkLtSymbol,          0,              Button3,        setlayout,      {.v = &layouts[2]} },

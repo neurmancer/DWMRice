@@ -26,6 +26,10 @@ Only the three accent colors are borrowed from the supplied ZIP's theme. The des
 
 DWM keeps the existing Fibonacci, extra-bar, and flycolors patches. The top bar holds numbered workspaces (`SYS`, `CODE`, `NET`, `WORK`, `AUX`), connection state, volume, and date/time. The bottom bar on the first monitor shows CPU utilization, AMD GPU load/temperature, and used RAM. Telemetry refreshes every two seconds without querying media players. The session cleans up its status process on exit.
 
+![NSD control bar](assets/bar-preview.png)
+
+*Actual bar renderer with sample window/status data.* The top bar uses cut-corner panels, a clickable `NSD // CTRL` session-menu badge, solid accent tabs for selected workspaces, blue occupied tabs, and dim empty tabs. Separate status panels show green connectivity, blue volume, and an accent-colored clock; offline/muted states turn amber. The title includes the monitor number and `LIVE`, `FLOAT`, or `FULL` mode. Super + C still cycles the accent. All workspace mouse bindings remain available. The geometry uses native X11 drawing with no extra fonts or compositor required; `barpadding` in `config.h` controls the height.
+
 `st` is the default terminal. An optional Kitty palette is also included: add `include midnight-relay.conf` to your existing Kitty config. The installer does not replace `kitty.conf`. Opaque windows keep text sharp; a compositor is optional future work.
 
 ## Current rig tuning

@@ -58,13 +58,13 @@
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
-enum { SchemeNorm, SchemeSel }; /* color schemes */
+enum { SchemeNorm, SchemeSel, SchemeTitle, SchemeDim, SchemeBlue, SchemeGreen, SchemeAlert }; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
-       ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
+       ClkClientWin, ClkRootWin, ClkBadge, ClkLast }; /* clicks */
 
 typedef union {
 	int i;
@@ -124,6 +124,7 @@ struct Monitor {
 	Workspace workspaces[32];
 	unsigned int curworkspace;
 	int gap, gapsenabled;
+	int badgeend, tagsend, layoutend, statusstart;
 	char ltsymbol[16];
 	float mfact;
 	int nmaster;
@@ -609,19 +610,25 @@ buttonpress(XEvent *e)
 		focus(NULL);
 	}
 	if (ev->window == selmon->barwin) {
-		i = x = 0;
-		do
-			x += TEXTW(tags[i]);
-		while (ev->x >= x && ++i < LENGTH(tags));
-		if (i < LENGTH(tags)) {
-			click = ClkTagBar;
-			arg.ui = 1 << i;
-		} else if (ev->x < x + TEXTW(selmon->ltsymbol))
+		if (ev->x < selmon->badgeend)
+			click = ClkBadge;
+		else if (ev->x < selmon->tagsend) {
+			x = selmon->badgeend;
+			for (i = 0; i < LENGTH(tags); i++) {
+				x += TEXTW(tags[i]) + 12;
+				if (ev->x < x) break;
+			}
+			if (i < LENGTH(tags)) {
+				click = ClkTagBar;
+				arg.ui = 1 << i;
+			}
+		} else if (ev->x < selmon->layoutend)
 			click = ClkLtSymbol;
-		else if (ev->x > selmon->ww - (int)TEXTW(stext) + lrpad - 2)
+		else if (ev->x >= selmon->statusstart)
 			click = ClkStatusText;
 		else
 			click = ClkWinTitle;
+
 	} else if ((c = wintoclient(ev->window))) {
 		focus(c);
 		restack(selmon);
@@ -884,62 +891,120 @@ dirtomon(int dir)
 	return m;
 }
 
+/* Chamfer panel corners without requiring icon fonts or a compositor. */
+static void
+barcorners(int x, int y, int w, int h, int cut)
+{
+	cut = MIN(cut, MIN(w / 3, h / 3));
+	if (cut <= 0) return;
+	XPoint left[] = {{x, y}, {x + cut, y}, {x, y + cut}};
+	XPoint right[] = {{x + w - 1, y + h - 1},
+	                 {x + w - cut - 1, y + h - 1},
+	                 {x + w - 1, y + h - cut - 1}};
+	XSetForeground(dpy, drw->gc, scheme[SchemeNorm][ColBg].pixel);
+	XFillPolygon(dpy, drw->drawable, drw->gc, left, 3, Convex, CoordModeOrigin);
+	XFillPolygon(dpy, drw->drawable, drw->gc, right, 3, Convex, CoordModeOrigin);
+}
+
+/* Measure and paint the same status cells; plain root text remains compatible. */
+static int
+statuscells(int x, int available, int paint)
+{
+	char text[sizeof stext], *save, *part, *end;
+	int used = 0, width, selected;
+	snprintf(text, sizeof text, "%s", stext);
+	for (part = strtok_r(text, "|", &save); part; part = strtok_r(NULL, "|", &save)) {
+		while (*part == ' ') part++;
+		end = part + strlen(part);
+		while (end > part && end[-1] == ' ') *--end = '\0';
+		if (!*part) continue;
+		width = MIN((int)TEXTW(part) + 18, available - used);
+		if (width <= 0) break;
+		selected = strstr(part, "OFFLINE") || strstr(part, "MUTE") ? SchemeAlert :
+		           !strcmp(part, "LINK") ? SchemeGreen :
+		           !strncmp(part, "VOL", 3) ? SchemeBlue : SchemeTitle;
+		if (paint) {
+			drw_setscheme(drw, scheme[selected]);
+			drw_text(drw, x + used, 4, width, bh - 8, lrpad/2 + 7, part, 0);
+			barcorners(x + used, 4, width, bh - 8, 5);
+			if (width > 16)
+				drw_rect(drw, x + used + 8, bh - 4, width - 16, 1, 1, 0);
+		}
+		used += width;
+		if (used < available) used += MIN(3, available-used);
+	}
+	return used;
+}
+
 void
 drawbar(Monitor *m)
 {
-	int x, w, tw = 0;
-	int boxs = drw->fonts->h / 9;
-	int boxw = drw->fonts->h / 6 + 2;
+	int x = 0, w, tw, room, selected;
 	unsigned int i, occ = 0, urg = 0;
 	Client *c;
+	char title[sizeof m->sel->name + 16];
 
-	if (!m->showbar)
-		goto extra;
+	if (!m->showbar) goto extra;
+	/* Clear the whole bar, including the fine blue chassis line. */
+	drw_setscheme(drw, scheme[SchemeNorm]);
+	drw_rect(drw, 0, 0, m->ww, bh, 1, 1);
+	drw_setscheme(drw, scheme[SchemeDim]);
+	drw_rect(drw, 0, bh-1, m->ww, 1, 1, 0);
 
-	/* draw status first so it can be overdrawn by tags later */
-	if (m == selmon) { /* status is only drawn on selected monitor */
-		drw_setscheme(drw, scheme[SchemeNorm]);
-		tw = TEXTW(stext) - lrpad + 2; /* 2px right padding */
-		drw_text(drw, m->ww - tw, 0, tw, bh, 0, stext, 0);
-	}
-
+	w = MIN((int)TEXTW(barbadge) + 20, m->ww);
+	drw_setscheme(drw, scheme[SchemeSel]);
+	drw_text(drw, 0, 3, w, bh - 6, lrpad/2 + 6, barbadge, 0);
+	barcorners(0, 3, w, bh - 6, 7);
+	x = m->badgeend = w;
 	for (c = m->clients; c; c = c->next) {
 		if (c->swallowedby) continue;
 		occ |= c->tags;
-		if (c->isurgent)
-			urg |= c->tags;
+		if (c->isurgent) urg |= c->tags;
 	}
-	x = 0;
-	for (i = 0; i < LENGTH(tags); i++) {
-		w = TEXTW(tags[i]);
-		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
-		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & 1 << i);
-		if (occ & 1 << i)
-			drw_rect(drw, x + boxs, boxs, boxw, boxw,
-				m == selmon && selmon->sel && selmon->sel->tags & 1 << i,
-				urg & 1 << i);
+	for (i = 0; i < LENGTH(tags) && x < m->ww; i++) {
+		w = MIN((int)TEXTW(tags[i]) + 12, m->ww - x);
+		selected = m->tagset[m->seltags] & (1 << i);
+		drw_setscheme(drw, scheme[(urg & (1 << i)) ? SchemeAlert :
+		    selected ? SchemeSel : (occ & (1 << i)) ? SchemeBlue : SchemeDim]);
+		drw_text(drw, x+2, 4, MAX(0,w-4), bh-8, lrpad/2 + 4, tags[i], 0);
+		barcorners(x+2, 4, MAX(0,w-4), bh-8, 5);
+		if (selected) {
+			drw_setscheme(drw, scheme[SchemeTitle]);
+			drw_rect(drw, x+7, bh-3, MAX(0,w-14), 2, 1, 0);
+		}
+		else if (occ & (1 << i))
+			drw_rect(drw, x+w/2, bh-4, 3, 2, 1, 0);
 		x += w;
 	}
-	w = TEXTW(m->ltsymbol);
-	drw_setscheme(drw, scheme[SchemeNorm]);
-	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
-
-	if ((w = m->ww - tw - x) > bh) {
-		if (m->sel) {
-			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
-			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
-			if (m->sel->isfloating)
-				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
-		} else {
-			drw_setscheme(drw, scheme[SchemeNorm]);
-			drw_rect(drw, x, 0, w, bh, 1, 1);
-		}
+	m->tagsend = x;
+	w = MIN((int)TEXTW(m->ltsymbol) + 8, m->ww-x);
+	if (w > 0) {
+		drw_setscheme(drw, scheme[SchemeGreen]);
+		drw_text(drw, x, 3, w, bh-6, lrpad/2+4, m->ltsymbol, 0);
+		barcorners(x, 3, w, bh-6, 5);
+		x += w;
 	}
+	m->layoutend = x;
+	/* Reserve a title where space permits; clip cells on narrow monitors. */
+	room = MAX(0, m->ww-x);
+	tw = statuscells(0, MAX(0, room - MIN(120, room/3)), 0);
+	m->statusstart = m->ww-tw;
+	w = m->statusstart-x;
+	if (w > 0) {
+		if (m->sel)
+			snprintf(title, sizeof title, "%02d / %s > %s", m->num + 1,
+			    m->sel->isfullscreen ? "FULL" : m->sel->isfloating ? "FLOAT" : "LIVE", m->sel->name);
+		else
+			snprintf(title, sizeof title, "CRASH / HARDWARE DIVISION :: STANDBY");
+		drw_setscheme(drw, scheme[m == selmon ? SchemeNorm : SchemeDim]);
+		drw_text(drw, x, 0, w, bh, lrpad/2+8, title, 0);
+	}
+	statuscells(m->statusstart, tw, 1);
 	drw_map(drw, m->barwin, 0, 0, m->ww, bh);
 extra:
 	if (m != mons || !eb.show) return;
-	drw_setscheme(drw, scheme[SchemeNorm]);
-	drw_text(drw, 0, 0, mons->ww, bh, 0, eb.text, 0);
+	drw_setscheme(drw, scheme[SchemeDim]);
+	drw_text(drw, 0, 0, mons->ww, bh, lrpad/2, eb.text, 0);
 	drw_map(drw, eb.win, 0, 0, mons->ww, bh);
 }
 
@@ -1774,7 +1839,7 @@ setup(void)
 	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
 		die("no fonts could be loaded.");
 	lrpad = drw->fonts->h;
-	bh = drw->fonts->h + 2;
+	bh = drw->fonts->h + barpadding;
 	updategeom();
 	/* init atoms */
 	utf8string = XInternAtom(dpy, "UTF8_STRING", False);
@@ -2436,6 +2501,8 @@ cycle_flycolors(const Arg *arg)
 	iflycol %= i;
 	colors[SchemeSel][1] = flycolors[iflycol];
 	colors[SchemeSel][2] = flycolors[iflycol];
+	colors[SchemeTitle][0] = flycolors[iflycol];
+	colors[SchemeTitle][2] = flycolors[iflycol];
 	update_scheme();
 	dmenucmd[10] = flycolors[iflycol];
 }
