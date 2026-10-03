@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+ <radialGradient id="wash"><stop stop-color="#1A203C"/><stop offset="1" stop-color="#090D16"/></radialGradient>
+ <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0V60" fill="none" stroke="#5A96FF" stroke-opacity=".055"/></pattern>
+ <pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 0H4" stroke="#090D16" stroke-opacity=".3"/></pattern>
+</defs>
+<rect width="1920" height="1080" fill="url(#wash)"/>
+<rect width="1920" height="1080" fill="url(#grid)"/>
+<g fill="none" stroke="#27334B"><path d="M64 170V64H370 M1550 64H1856V170 M64 910V1016H370 M1550 1016H1856V910"/>
+<circle cx="1370" cy="514" r="282"/><circle cx="1370" cy="514" r="260" stroke-dasharray="2 12"/>
+<path d="M1035 514H1705 M1370 180V850" stroke-dasharray="3 9"/></g>
+<g fill="none" stroke="#C170FF" stroke-width="2"><path d="M1150 685A278 278 0 0 1 1525 284"/><path d="M1545 732A278 278 0 0 0 1610 375" stroke="#5A96FF"/></g>
+<g font-family="DejaVu Sans Mono, monospace">
+<text x="120" y="142" fill="#5A96FF" font-size="14" letter-spacing="4">CRASH / HARDWARE DIVISION</text>
+<text x="120" y="423" fill="#C170FF" font-size="16" letter-spacing="6">TRANSMISSION 004 // AFTER HOURS</text>
+<text x="112" y="514" fill="#C6D3EA" font-size="76" font-weight="bold" letter-spacing="-4">MIDNIGHT</text>
+<text x="112" y="605" fill="#C6D3EA" font-size="76" font-weight="bold" letter-spacing="-4">RELAY<tspan fill="#00EB74">_</tspan></text>
+<path d="M120 644H620" stroke="#27334B"/><path d="M120 644H230" stroke="#C170FF" stroke-width="3"/>
+<text x="120" y="682" fill="#5A96FF" font-size="16" letter-spacing="2">FULL CLOCK. AFTER HOURS.</text>
+<text x="120" y="713" fill="#52617A" font-size="13">DYNAMIC WINDOW MACHINE / EST. 00:00</text>
+<text x="1370" y="547" text-anchor="middle" fill="#C170FF" font-size="108" font-weight="bold" letter-spacing="6">NSD</text>
+<text x="1268" y="608" fill="#5A96FF" font-size="12" letter-spacing="4">SIGNAL LOCKED</text>
+<text x="120" y="958" fill="#52617A" font-size="12" letter-spacing="2">NO CLOUD / NO NOISE / JUST THE MACHINE</text>
+<text x="1540" y="958" fill="#00EB74" font-size="12" letter-spacing="2">● CARRIER ACTIVE</text>
+</g>
+<path d="M1215 785v-10" stroke="#00EB74" stroke-width="3"/>
+<path d="M1222 785v-30" stroke="#27334B" stroke-width="3"/>
+<path d="M1229 785v-13" stroke="#27334B" stroke-width="3"/>
+<path d="M1236 785v-45" stroke="#27334B" stroke-width="3"/>
+<path d="M1243 785v-40" stroke="#27334B" stroke-width="3"/>
+<path d="M1250 785v-41" stroke="#27334B" stroke-width="3"/>
+<path d="M1257 785v-48" stroke="#27334B" stroke-width="3"/>
+<path d="M1264 785v-18" stroke="#00EB74" stroke-width="3"/>
+<path d="M1271 785v-37" stroke="#27334B" stroke-width="3"/>
+<path d="M1278 785v-19" stroke="#27334B" stroke-width="3"/>
+<path d="M1285 785v-50" stroke="#27334B" stroke-width="3"/>
+<path d="M1292 785v-44" stroke="#27334B" stroke-width="3"/>
+<path d="M1299 785v-44" stroke="#27334B" stroke-width="3"/>
+<path d="M1306 785v-50" stroke="#27334B" stroke-width="3"/>
+<path d="M1313 785v-19" stroke="#00EB74" stroke-width="3"/>
+<path d="M1320 785v-37" stroke="#27334B" stroke-width="3"/>
+<path d="M1327 785v-18" stroke="#27334B" stroke-width="3"/>
+<path d="M1334 785v-48" stroke="#27334B" stroke-width="3"/>
+<path d="M1341 785v-41" stroke="#27334B" stroke-width="3"/>
+<path d="M1348 785v-40" stroke="#27334B" stroke-width="3"/>
+<path d="M1355 785v-45" stroke="#27334B" stroke-width="3"/>
+<path d="M1362 785v-13" stroke="#00EB74" stroke-width="3"/>
+<path d="M1369 785v-30" stroke="#27334B" stroke-width="3"/>
+<path d="M1376 785v-10" stroke="#27334B" stroke-width="3"/>
+<path d="M1383 785v-39" stroke="#27334B" stroke-width="3"/>
+<path d="M1390 785v-31" stroke="#27334B" stroke-width="3"/>
+<path d="M1397 785v-29" stroke="#27334B" stroke-width="3"/>
+<path d="M1404 785v-33" stroke="#27334B" stroke-width="3"/>
+<path d="M1411 785v-43" stroke="#00EB74" stroke-width="3"/>
+<path d="M1418 785v-16" stroke="#27334B" stroke-width="3"/>
+<path d="M1425 785v-38" stroke="#27334B" stroke-width="3"/>
+<path d="M1432 785v-23" stroke="#27334B" stroke-width="3"/>
+<path d="M1439 785v-14" stroke="#27334B" stroke-width="3"/>
+<path d="M1446 785v-11" stroke="#27334B" stroke-width="3"/>
+<path d="M1453 785v-14" stroke="#27334B" stroke-width="3"/>
+<path d="M1460 785v-23" stroke="#00EB74" stroke-width="3"/>
+<path d="M1467 785v-38" stroke="#27334B" stroke-width="3"/>
+<path d="M1474 785v-16" stroke="#27334B" stroke-width="3"/>
+<path d="M1481 785v-43" stroke="#27334B" stroke-width="3"/>
+<path d="M1488 785v-33" stroke="#27334B" stroke-width="3"/>
+<path d="M1495 785v-29" stroke="#27334B" stroke-width="3"/>
+<path d="M1502 785v-31" stroke="#27334B" stroke-width="3"/>
+<path d="M1509 785v-39" stroke="#00EB74" stroke-width="3"/>
+<path d="M1516 785v-10" stroke="#27334B" stroke-width="3"/>
+<path d="M1523 785v-30" stroke="#27334B" stroke-width="3"/>
+<path d="M1530 785v-13" stroke="#27334B" stroke-width="3"/>
+<path d="M1537 785v-45" stroke="#27334B" stroke-width="3"/>
+<path d="M1544 785v-40" stroke="#27334B" stroke-width="3"/>
+<rect width="1920" height="1080" fill="url(#scan)"/></svg>

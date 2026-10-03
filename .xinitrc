@@ -1,10 +1,10 @@
-#!bin/sh
 #!/bin/sh
-
-# Dual-monitor setup - HDMI-A-1 (left) + DisplayPort-0 (right, primary)
-xrandr --output DisplayPort-0 --primary --mode 1920x1080 \
-       --output HDMI-A-1 --mode 1920x1080 --left-of DisplayPort-0
-
-pulseaudio --start &
-
-exec dwm
+# Preserve Arch's system X initialization (including environment integration).
+if [ -d /etc/X11/xinit/xinitrc.d ]; then
+    for hook in /etc/X11/xinit/xinitrc.d/?*.sh; do
+        [ ! -x "$hook" ] || . "$hook"
+    done
+    unset hook
+fi
+export PATH="$HOME/.local/bin:$PATH"
+exec rice-session

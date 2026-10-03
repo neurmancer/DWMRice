@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+choice=$(printf 'Lock\nLog out\nReboot\nShut down\nCancel\n' | dmenu -i -l 5 -p 'NSD // SESSION') || exit 0
+case "$choice" in
+    Lock) exec rice-lock ;;
+    'Log out'|'Reboot'|'Shut down')
+        answer=$(printf 'Cancel\nConfirm\n' | dmenu -i -l 2 -p "NSD // $choice?") || exit 0
+        [ "$answer" = Confirm ] || exit 0
+        case "$choice" in
+            'Log out') exec xprop -root -f _NSD_SESSION_ACTION 8s -set _NSD_SESSION_ACTION logout ;;
+            Reboot) exec systemctl reboot ;;
+            'Shut down') exec systemctl poweroff ;;
+        esac ;;
+esac

@@ -1,0 +1,24 @@
+#!/bin/sh
+set -eu
+mode=${1:-region}
+case "$mode" in screen|region|window) ;; *) echo 'Usage: rice-shot [screen|region|window]' >&2; exit 2;; esac
+command -v maim >/dev/null 2>&1 || { echo 'NSD: install maim for screenshots.' >&2; exit 1; }
+pictures=$(xdg-user-dir PICTURES 2>/dev/null || printf '%s/Pictures' "$HOME")
+[ -n "$pictures" ] || pictures=$HOME/Pictures
+mkdir -p "$pictures/Screenshots"
+file=$(mktemp "$pictures/Screenshots/NSD-$(date +%Y%m%d-%H%M%S)-XXXXXX.png")
+trap 'rm -f "$file"' EXIT
+trap 'exit 1' HUP INT TERM
+case "$mode" in
+    screen) maim -u "$file" ;;
+    region) maim -u -s -c '0.757,0.439,1,0.8' "$file" ;;
+    window)
+        id=$(xprop -root _NET_ACTIVE_WINDOW | awk '/window id/ {print $NF}')
+        case "$id" in ''|0x0) echo 'NSD: no active window.' >&2; exit 1;; esac
+        maim -u -i "$id" "$file" ;;
+esac
+trap - EXIT
+printf '%s\n' "$file"
+if command -v notify-send >/dev/null 2>&1; then
+    notify-send 'NSD // CAPTURE SAVED' "$file" || :
+fi

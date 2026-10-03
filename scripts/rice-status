@@ -1,0 +1,99 @@
+#!/bin/sh
+# NSD telemetry using /proc, sysfs, and standard shell utilities.
+set -u
+export LC_ALL=C
+case "$#:${1:-}" in
+    0:) once=0 ;;
+    1:--once) once=1 ;;
+    *) echo 'Usage: rice-status [--once]' >&2; exit 2 ;;
+esac
+
+read_value() {
+    [ ! -r "$1" ] || cat "$1" 2>/dev/null || :
+}
+
+cpu_sample() {
+    # Guest counters are already included in user/nice.
+    awk '/^cpu / {for (i=2; i<=9; i++) total+=$i; print total, $5+$6; exit}' /proc/stat
+}
+
+gpu() {
+    for card in /sys/class/drm/card[0-9]*; do
+        case "${card##*/}" in *-*) continue;; esac
+        [ "$(read_value "$card/device/vendor")" = 0x1002 ] || continue
+        busy=$(read_value "$card/device/gpu_busy_percent")
+        case "$busy" in ''|*[!0-9]*) busy=--;; esac
+        temperature=--
+        for sensor in "$card"/device/hwmon/hwmon*/temp1_input; do
+            raw=$(read_value "$sensor")
+            case "$raw" in ''|*[!0-9]*) continue;; esac
+            temperature=$(awk -v value="$raw" 'BEGIN {printf "%.0f", value/1000}')
+            break
+        done
+        printf '%s%% %sC' "$busy" "$temperature"
+        return
+    done
+    printf '%s' --
+}
+
+volume() {
+    if command -v wpctl >/dev/null 2>&1; then
+        value=$(timeout 0.5 wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || :)
+        result=$(printf '%s\n' "$value" | awk '
+            $1 == "Volume:" && $2 ~ /^[0-9]+([.][0-9]+)?$/ {
+                if ($0 ~ /\[MUTED\]/) print "MUTE";
+                else printf "%.0f%%", $2*100;
+                exit
+            }')
+        if [ -n "$result" ]; then printf '%s' "$result"; return; fi
+    fi
+    if command -v pactl >/dev/null 2>&1; then
+        value=$(timeout 0.5 pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null || :)
+        result=$(printf '%s\n' "$value" | awk '{for (i=1; i<=NF; i++) if ($i ~ /^[0-9]+%$/) {print $i; exit}}')
+        if [ -n "$result" ]; then
+            mute=$(timeout 0.5 pactl get-sink-mute @DEFAULT_SINK@ 2>/dev/null || :)
+            case "$mute" in *yes*) printf MUTE;; *) printf '%s' "$result";; esac
+            return
+        fi
+    fi
+    printf '%s' --
+}
+
+sleeper=
+trap '[ -z "$sleeper" ] || kill "$sleeper" 2>/dev/null; exit 0' HUP INT TERM
+set -- $(cpu_sample)
+previous_total=${1:-0}
+previous_idle=${2:-0}
+sleep 0.1 &
+sleeper=$!
+wait "$sleeper"
+sleeper=
+while :; do
+    set -- $(cpu_sample)
+    total=${1:-0}
+    idle=${2:-0}
+    cpu=$(awk -v total="$total" -v idle="$idle" -v pt="$previous_total" -v pi="$previous_idle" '
+        BEGIN {
+            delta=total-pt; busy=delta-(idle-pi);
+            if (delta<=0) {printf "--"; exit}
+            if (busy<0) busy=0;
+            if (busy>delta) busy=delta;
+            printf "%.0f", 100*busy/delta
+        }')
+    ram=$(awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2; found=1}
+        END {if (t && found) printf "%.1f", (t-a)/1048576; else printf "--"}' /proc/meminfo)
+    link=OFFLINE
+    for interface in /sys/class/net/*; do
+        [ "${interface##*/}" != lo ] || continue
+        if [ "$(read_value "$interface/operstate")" = up ]; then link=LINK; break; fi
+    done
+    status=" $link | VOL $(volume) | $(date '+%a %d %b %H:%M') ; NSD / CRASH HARDWARE :: CPU $cpu% | GPU $(gpu) | RAM ${ram}G "
+    if [ "$once" -eq 1 ]; then printf '%s\n' "$status"; exit 0; fi
+    timeout 2 xsetroot -name "$status" || exit 1
+    previous_total=$total
+    previous_idle=$idle
+    sleep 2 &
+    sleeper=$!
+    wait "$sleeper"
+    sleeper=
+done

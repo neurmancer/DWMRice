@@ -1,0 +1,5 @@
+#!/bin/sh
+# Copy to monitors.sh, chmod +x, then adapt names from xrandr --query.
+# Original desktop layout; verify connectors and supported modes before enabling:
+xrandr --output DisplayPort-0 --primary --mode 1920x1080 \
+       --output HDMI-A-1 --mode 1920x1080 --left-of DisplayPort-0

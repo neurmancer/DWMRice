@@ -1,0 +1,25 @@
+#!/bin/sh
+export PATH="$HOME/.local/bin:$PATH"
+config=${XDG_CONFIG_HOME:-$HOME/.config}/dwmrice
+data=${XDG_DATA_HOME:-$HOME/.local/share}/dwmrice
+# Optional monitor commands belong in this user-owned hook.
+[ ! -x "$config/monitors.sh" ] || "$config/monitors.sh"
+xsetroot -solid '#090D16'
+rice-wallpaper
+# Only stop the notification process started by this session.
+notify_pid=
+if command -v dunst >/dev/null 2>&1 && ! pgrep -u "$(id -u)" -x dunst >/dev/null; then
+    dunst -conf "${XDG_CONFIG_HOME:-$HOME/.config}/dunst/nsd.conf" &
+    notify_pid=$!
+fi
+rice-status &
+status_pid=$!
+cleanup() {
+    kill "$status_pid" 2>/dev/null || :
+    [ -z "$notify_pid" ] || kill "$notify_pid" 2>/dev/null || :
+}
+trap cleanup EXIT
+trap 'exit 0' HUP INT TERM
+dwm &
+wm_pid=$!
+wait "$wm_pid"

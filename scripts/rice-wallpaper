@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+data=${XDG_DATA_HOME:-$HOME/.local/share}/dwmrice
+command -v feh >/dev/null 2>&1 || exit 0
+# Xinerama monitor order controls which image is placed on each monitor.
+count=$(xrandr --listactivemonitors 2>/dev/null | awk 'NR == 1 {print $2}')
+case "$count" in ''|*[!0-9]*) count=1;; esac
+if [ "$count" -ge 2 ] && [ -f "$data/nsd-schematic.png" ]; then
+    exec feh --no-fehbg --bg-fill "$data/nsd-schematic.png" "$data/midnight-relay.png"
+fi
+exec feh --no-fehbg --bg-fill "$data/midnight-relay.png"
