@@ -90,6 +90,7 @@ static const char *termcmd[]  = { "st", NULL };
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_grave,  togglescratch,  {0} },
+	{ MODKEY|ShiftMask,             XK_z,      spawn,          SHCMD("rice-media --toggle") },
 	{ MODKEY,                       XK_minus,  changegap,      {.i = -2} },
 	{ MODKEY,                       XK_equal,  changegap,      {.i = +2} },
 	{ MODKEY,                       XK_g,      togglegaps,     {0} },

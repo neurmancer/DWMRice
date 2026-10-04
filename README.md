@@ -12,7 +12,7 @@
 
 ## Palette
 
-Only the three accent colors are borrowed from the supplied ZIP's theme. The desktop has its own identity and no integration with the source application. The archive remains untouched.
+Only the three accent colors are borrowed from the supplied ZIP's theme. The desktop has its own identity; the lower bar can optionally read Spotify or ShittyJukebox through MPRIS. The archive remains untouched.
 
 | Role | Color |
 | --- | --- |
@@ -24,7 +24,7 @@ Only the three accent colors are borrowed from the supplied ZIP's theme. The des
 | Green cursor / signal | `#00EB74` |
 | Amber alternate accent | `#FFB85C` |
 
-DWM keeps the existing Fibonacci, extra-bar, and flycolors patches. The top bar holds numbered workspaces (`SYS`, `CODE`, `NET`, `WORK`, `AUX`), connection state, volume, and date/time. The bottom bar on the first monitor shows CPU utilization, AMD GPU load/temperature, and used RAM. Telemetry refreshes every two seconds without querying media players. The session cleans up its status process on exit.
+DWM keeps the existing Fibonacci, extra-bar, and flycolors patches. The top bar holds numbered workspaces (`SYS`, `CODE`, `NET`, `WORK`, `AUX`), connection state, volume, and date/time. The bottom bar on the first monitor shows CPU utilization, AMD GPU load/temperature, and used RAM. The selected player's song and playback state appear before telemetry; updates run approximately every two seconds. The session cleans up its status process on exit.
 
 ![NSD control bar](assets/bar-preview.png)
 
@@ -38,7 +38,7 @@ Read-only hardware inspection reported a **Ryzen 5 2600 (6 cores / 12 threads)**
 
 - Restored the original **120 updates/second** limit for dragging and resizing windows. This is DWM's mouse-event throttle, not a monitor refresh setting or a measured frame rate.
 - Clean builds use up to **8 parallel jobs**, based on available logical CPUs, to reduce rebuild time while leaving headroom on this 12-thread machine.
-- Hardware telemetry uses `/proc` and `/sys`; removed media polling and battery polling from the desktop status loop.
+- Hardware telemetry uses `/proc` and `/sys`; battery polling is omitted, and media queries target only the selected player with bounded timeouts.
 - Kept tiled resize hints disabled so terminal size increments do not leave unused strips between windows.
 - Enabled a dual-1080p startup layout: HDMI on the left, DisplayPort on the right and primary. Connector names are resolved in the running Xorg session.
 
@@ -51,7 +51,7 @@ From this repository, install build and X11 dependencies:
 ```sh
 sudo pacman -S --needed base-devel pkgconf libx11 libxft libxinerama fontconfig \
   freetype2 ncurses xorg-server xorg-xinit xorg-xsetroot xorg-xprop \
-  xorg-xrandr ttf-dejavu feh dunst libnotify maim i3lock xdg-user-dirs
+  xorg-xrandr ttf-dejavu feh dunst libnotify maim i3lock xdg-user-dirs playerctl
 
 ./scripts/install.sh --check
 ./scripts/install.sh --install
@@ -91,6 +91,7 @@ The session adds `~/.local/bin` to PATH and uses Arch's system X initialization 
 | Super + comma / period | Focus previous / next monitor |
 | Super + Shift + X | Close focused window |
 | Super + grave (backtick) | Show / hide scratchpad terminal |
+| Super + Shift + Z | Switch lower-bar music source: Spotify / ShittyJukebox |
 | Super + minus / equals | Shrink / grow gaps by 2 px |
 | Super + G | Toggle gaps |
 | Super + Shift + E or Q | NSD session menu |
@@ -140,6 +141,7 @@ Notification configuration follows the [Dunst manual](https://man.archlinux.org/
 
 ```sh
 ./tests/smoke.sh
+./tests/media.sh
 cc -D_XOPEN_SOURCE=600 -std=c99 -g -fsanitize=address,undefined \
   -o /tmp/nsd-scrollback-test tests/scrollback.c -lutil
 ASAN_OPTIONS=detect_leaks=0 /tmp/nsd-scrollback-test
@@ -152,3 +154,11 @@ Physical monitor behavior, lock authentication, screenshot capture, notification
 ## Apply from an existing session
 
 Install the dependencies above and run `./scripts/install.sh --install`. Save your work, then log out and run `startx` from the TTY. The running DWM keeps its old bindings until restarted; the new build uses Super + Shift + E/Q for the confirmation menu. A graphical login manager needs a session command pointing to `~/.local/bin/rice-session`, since it may not read `.xinitrc`.
+
+## Lower-bar music
+
+**Super + Shift + Z** alternates between Spotify and ShittyJukebox. Spotify is the default. The selection persists in `${XDG_STATE_HOME:-~/.local/state}/dwmrice/media-player` and is shown on the next status refresh. The switch only selects what the bar displays; it does not start, pause, or stop either application.
+
+The bar shows the selected source, playback state, artist, and title, followed by hardware telemetry. A closed/unresponsive player shows `OFFLINE`; a player without metadata shows `NO TRACK`. Long metadata is bounded to fit the bar and cannot inject its semicolon delimiter. Both applications must expose MPRIS on the same user's session bus as DWM.
+
+`rice-media --toggle` also switches from a terminal; `rice-media --status` prints the current song. Queries use `spotify` and `ShittyJukeBox`, matching the jukebox source's MPRIS identity. [Playerctl's base-name selection](https://man.archlinux.org/man/playerctl.1.en) also handles instance suffixes. When several instances of one application exist, playerctl chooses the matching instance; this shortcut switches applications, not individual instances.

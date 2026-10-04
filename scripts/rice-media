@@ -1,0 +1,56 @@
+#!/bin/sh
+# Select the lower-bar MPRIS source; never send playback commands.
+set -eu
+export LC_ALL=C
+state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/dwmrice
+state_file=$state_dir/media-player
+selection=spotify
+read_selection() {
+    selection=spotify
+    if [ -r "$state_file" ]; then
+        IFS= read -r selection < "$state_file" || :
+    fi
+    case "$selection" in spotify|jukebox) ;; *) selection=spotify;; esac
+}
+case "${1:---status}" in
+    --toggle)
+        umask 077
+        mkdir -p "$state_dir"
+        # Serialize rapid key presses and publish the new selection atomically.
+        exec 9>"$state_dir/media.lock"
+        flock -x 9
+        read_selection
+        case "$selection" in spotify) selection=jukebox;; *) selection=spotify;; esac
+        temp=$(mktemp "$state_dir/media-player.XXXXXX")
+        trap 'rm -f "$temp"' EXIT
+        trap 'exit 1' HUP INT TERM
+        printf '%s\n' "$selection" > "$temp"
+        mv -f "$temp" "$state_file"
+        exit 0 ;;
+    --status) read_selection ;;
+    *) echo 'Usage: rice-media [--status|--toggle]' >&2; exit 2 ;;
+esac
+case "$selection" in
+    spotify) player=spotify; label=SPOTIFY ;;
+    jukebox) player=ShittyJukeBox; label=SHITTYJUKEBOX ;;
+esac
+if ! command -v playerctl >/dev/null 2>&1; then
+    printf '%s // INSTALL PLAYERCTL\n' "$label"
+    exit 0
+fi
+# playerctl's base-name matching also covers .instanceNNN players.
+if metadata=$(timeout 0.7 playerctl -p "$player" metadata \
+    --format '{{status}} // {{artist}} - {{default(title, "Unknown track")}}' 2>/dev/null); then
+    # Root-name semicolons split DWM's bars. Strip controls and limit bytes to
+    # leave room in its 256-byte lower-bar buffer, retaining valid UTF-8.
+    clean=$(printf '%s' "$metadata" | tr '\n\r\t;|' '     ' | tr -d '\000-\037\177' |
+        head -c 120 | iconv -f UTF-8 -t UTF-8 -c 2>/dev/null || :)
+    [ -n "$clean" ] || clean='NO TRACK'
+    printf '%s // %s\n' "$label" "$clean"
+else
+    playback=$(timeout 0.7 playerctl -p "$player" status 2>/dev/null || :)
+    case "$playback" in
+        Playing|Paused|Stopped) printf '%s // %s // NO TRACK\n' "$label" "$playback" ;;
+        *) printf '%s // OFFLINE\n' "$label" ;;
+    esac
+fi

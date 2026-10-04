@@ -2,6 +2,7 @@
 # NSD telemetry using /proc, sysfs, and standard shell utilities.
 set -u
 export LC_ALL=C
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 case "$#:${1:-}" in
     0:) once=0 ;;
     1:--once) once=1 ;;
@@ -87,7 +88,7 @@ while :; do
         [ "${interface##*/}" != lo ] || continue
         if [ "$(read_value "$interface/operstate")" = up ]; then link=LINK; break; fi
     done
-    status=" $link | VOL $(volume) | $(date '+%a %d %b %H:%M') ; NSD / CRASH HARDWARE :: CPU $cpu% | GPU $(gpu) | RAM ${ram}G "
+    status=" $link | VOL $(volume) | $(date '+%a %d %b %H:%M') ; NSD // $("$script_dir/rice-media") :: CPU $cpu% | GPU $(gpu) | RAM ${ram}G "
     if [ "$once" -eq 1 ]; then printf '%s\n' "$status"; exit 0; fi
     timeout 2 xsetroot -name "$status" || exit 1
     previous_total=$total

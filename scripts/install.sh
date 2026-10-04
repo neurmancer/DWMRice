@@ -50,7 +50,7 @@ done
 for file in dmenu_run dmenu_path stest; do
     copy "$build/dmenu/$file" "$prefix/bin/$file" 755
 done
-for file in rice-session rice-status rice-menu rice-lock rice-shot rice-wallpaper; do
+for file in rice-session rice-status rice-menu rice-lock rice-shot rice-wallpaper rice-media; do
     copy "$root/scripts/$file" "$prefix/bin/$file" 755
 done
 # Back up existing st terminfo entries before tic replaces them.
